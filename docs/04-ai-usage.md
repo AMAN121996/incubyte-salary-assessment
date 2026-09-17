@@ -44,6 +44,7 @@ docs **before** implementation, so it could be reviewed up front.
 | A UI test asserted `page` was *absent* after a search, but the app correctly sends `page=1` | Test failed; behaviour was inspected before changing anything | Fixed the assertion, not the code |
 | npm 10.9 crashed (`edgesOut` of null) resolving the frontend tree | `npm install` failed even from a clean state | Switched the frontend to pnpm (recorded in `packageManager`) |
 | Rails' generated production config had no database path and forced SSL unconditionally | Reviewing config before writing the Dockerfile | `DATABASE_PATH` with a default; `FORCE_SSL` env toggle; `/up` exempt from the redirect |
+| CI used `db:prepare`, which also seeds a newly created database, so the specs ran against 10,000 employees | First GitHub Actions run failed 16 specs that passed locally (the local test DB already existed) | Reproduced on a fresh DB, switched CI to `db:schema:load` |
 | Serving the SPA's `index.html` from `public/` would inherit a 1-year cache header, pinning users to an old UI after a deploy | Reviewing the static file server config | `SpaController` serves `index.html` with `no-cache`; only hashed assets are long-cached |
 
 ## Product judgement kept in human-reviewable docs
