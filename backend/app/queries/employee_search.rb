@@ -4,8 +4,18 @@
 class EmployeeSearch
   DEFAULT_PER_PAGE = 25
   MAX_PER_PAGE = 100
-  SORTABLE_COLUMNS = %w[full_name job_title department country_code salary hired_on].freeze
   DEFAULT_SORT = "full_name".freeze
+
+  # Whitelist of sortable columns -> SQL, built only from constants. The UI
+  # shows country names, so country sorts by name rather than ISO code.
+  SORT_EXPRESSIONS = {
+    "full_name" => "full_name",
+    "job_title" => "job_title",
+    "department" => "department",
+    "country_code" => "CASE country_code #{Countries::LIST.map { |code, c| "WHEN '#{code}' THEN '#{c[:name].gsub("'", "''")}'" }.join(' ')} END",
+    "salary" => "salary",
+    "hired_on" => "hired_on"
+  }.freeze
 
   Result = Data.define(:records, :page, :per_page, :total) do
     def total_pages
@@ -30,7 +40,7 @@ class EmployeeSearch
     page = requested_page.clamp(1, [ (total.to_f / per_page).ceil, 1 ].max)
 
     Result.new(
-      records: filtered.order(order_clause).limit(per_page).offset((page - 1) * per_page).to_a,
+      records: filtered.order(*order_clause).limit(per_page).offset((page - 1) * per_page).to_a,
       page: page,
       per_page: per_page,
       total: total
@@ -53,19 +63,10 @@ class EmployeeSearch
   end
 
   def order_clause
-    column = SORTABLE_COLUMNS.include?(param(:sort)) ? param(:sort) : DEFAULT_SORT
-    direction = param(:direction)&.downcase == "desc" ? "DESC" : "ASC"
+    expression = Arel.sql(SORT_EXPRESSIONS.fetch(param(:sort), SORT_EXPRESSIONS.fetch(DEFAULT_SORT)))
+    direction = param(:direction)&.downcase == "desc" ? expression.desc : expression.asc
     # id as a tie-breaker keeps pagination stable when sort values repeat
-    Arel.sql("#{sort_expression(column)} #{direction}, id ASC")
-  end
-
-  # The UI shows country names, so sort by name. The CASE is built only from
-  # the constant country list, never from user input.
-  def sort_expression(column)
-    return column unless column == "country_code"
-
-    whens = Countries::LIST.map { |code, attrs| "WHEN '#{code}' THEN #{Employee.connection.quote(attrs[:name])}" }
-    "CASE country_code #{whens.join(' ')} END"
+    [ direction, { id: :asc } ]
   end
 
   def requested_page

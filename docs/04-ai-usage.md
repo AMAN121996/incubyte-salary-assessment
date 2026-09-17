@@ -71,6 +71,7 @@ with it (confirmed by running the new tests against the old code):
 | The search box drifted from the URL (nav link, Back, Clear filters racing a pending search) | Code review | Extracted `useSearchInput` |
 | **The first fix for the search box itself lost keystrokes** ("priya" became "pria") when a search landed mid-typing | Found only by the load test; a normal UI test couldn't reproduce it | The hook ignores the URL echo of its own search; pinned by a fake-timer test that fails on the buggy version every time |
 | First click on "Name" did nothing (default sort was implicit) | Code review | Treat a missing sort as `full_name` |
+| The country-name sort was first written as interpolated SQL, which Brakeman flagged as possible injection (a false positive, but CI failed) | CI run; Brakeman had been skipped locally after that fix | Sort expressions moved to a frozen whitelist constant with Arel `asc`/`desc`, so the safety is visible in the code |
 | 8–9 UI tests exceeded the 5 s default under load | Load test | Raised test and async-lookup timeouts; timing-sensitive logic moved to fake-timer hook tests |
 
 Lesson recorded: passing tests on an idle laptop weren't enough evidence. The independent review
