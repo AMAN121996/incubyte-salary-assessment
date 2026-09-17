@@ -4,5 +4,10 @@ Rails.application.routes.draw do
   namespace :api do
     resources :employees, only: %i[index show create update destroy]
     resource :lookups, only: :show
+
+    scope :insights, controller: :insights do
+      get "countries", action: :countries
+      get "countries/:code", action: :country
+    end
   end
 end

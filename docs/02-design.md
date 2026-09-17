@@ -82,6 +82,6 @@ prevent SQL injection through `ORDER BY`. `per_page` is clamped to 1..100.
 |----------|-------------|-----|
 | SQLite | Postgres | 10k rows, one HR team: SQLite is fast enough and has no ops overhead. Postgres is the upgrade path if concurrent writers or analytics grow. |
 | Offset pagination | Keyset/cursor | Users jump to page N and sort by arbitrary columns; offset cost at 10k rows is negligible. |
-| Median in Ruby over a `pluck` of one country's salaries | SQL window functions | Portable across SQLite/Postgres, trivially unit-tested; ≤10k integers is microseconds of work. Min/max/avg/count stay in SQL. |
+| All stats (incl. median, p25/p75) in Ruby over one `pluck` of (group, salary) pairs | SQL `GROUP BY` for min/max/avg plus window functions for percentiles | *Revised during build:* a single query feeding one pure `SalaryStatistics` class means every figure on a screen comes from the same data and the same maths (no SQL-vs-Ruby rounding mismatch). Portable across SQLite/Postgres and trivially unit-tested; plucking ≤10k integer pairs takes milliseconds (see performance notes). Percentiles match Excel's `PERCENTILE.INC`. |
 | Mono-image (Rails serves SPA) | Separate frontend host + CORS | One deployable, no CORS, same origin. |
 | No auth | Devise / SSO | Out of scope (see requirements); would be SSO in production. |
