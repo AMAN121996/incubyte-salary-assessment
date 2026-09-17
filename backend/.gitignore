@@ -1,0 +1,15 @@
+/.bundle
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+/tmp/pids/*
+!/tmp/pids/.keep
+/storage/*
+!/storage/.keep
+/config/master.key
+/config/credentials/*.key
+/coverage
+# Built React app is copied here at image build time
+/public/assets
+/public/index.html
