@@ -83,6 +83,15 @@ RSpec.describe "Employees API" do
       expect(json["currency"]).to eq("INR")
     end
 
+    it "returns a field error, not a 500, when a concurrent save takes the email first" do
+      allow_any_instance_of(Employee).to receive(:save).and_raise(ActiveRecord::RecordNotUnique)
+
+      post "/api/employees", params: { employee: valid_attributes }, as: :json
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(json["errors"]).to eq("email" => [ "has already been taken" ])
+    end
+
     it "returns 400 when the employee payload is missing" do
       post "/api/employees", params: {}, as: :json
 

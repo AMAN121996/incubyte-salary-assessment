@@ -41,10 +41,20 @@ RSpec.describe Employee do
       expect(build(:employee, salary: nil)).not_to be_valid
     end
 
-    it "rejects a hire date in the future" do
-      employee.hired_on = Date.current + 1
-      expect(employee).not_to be_valid
-      expect(employee.errors[:hired_on]).to include("can't be in the future")
+    describe "hire date in the future" do
+      # 2026-09-17 20:00 UTC is already 2026-09-18 in India (UTC+5:30).
+      around { |example| travel_to(Time.utc(2026, 9, 17, 20, 0)) { example.run } }
+
+      it "accepts today's date for an HR manager in a time zone ahead of UTC" do
+        employee.hired_on = Date.new(2026, 9, 18)
+        expect(employee).to be_valid
+      end
+
+      it "rejects a date that is in the future everywhere" do
+        employee.hired_on = Date.new(2026, 9, 19)
+        expect(employee).not_to be_valid
+        expect(employee.errors[:hired_on]).to include("can't be in the future")
+      end
     end
   end
 
@@ -71,6 +81,15 @@ RSpec.describe Employee do
       employee.update!(country_code: "GB")
 
       expect(employee.currency).to eq("GBP")
+    end
+
+    it "is kept as recorded when other details change" do
+      employee = create(:employee, country_code: "US")
+      employee.update_column(:currency, "XXX") # e.g. recorded before a currency mapping changed
+
+      employee.update!(full_name: "Renamed")
+
+      expect(employee.reload.currency).to eq("XXX")
     end
 
     it "cannot be set independently of the country" do
