@@ -24,11 +24,16 @@ class EmployeeSearch
 
   def call
     filtered = apply_filters(@scope)
+    total = filtered.count
+    # A page past the end (e.g. after deleting the last row on it) returns the
+    # last page instead of an empty one; this also bounds the SQL offset.
+    page = requested_page.clamp(1, [ (total.to_f / per_page).ceil, 1 ].max)
+
     Result.new(
       records: filtered.order(order_clause).limit(per_page).offset((page - 1) * per_page).to_a,
       page: page,
       per_page: per_page,
-      total: filtered.count
+      total: total
     )
   end
 
@@ -49,13 +54,22 @@ class EmployeeSearch
 
   def order_clause
     column = SORTABLE_COLUMNS.include?(param(:sort)) ? param(:sort) : DEFAULT_SORT
-    direction = param(:direction)&.downcase == "desc" ? :desc : :asc
+    direction = param(:direction)&.downcase == "desc" ? "DESC" : "ASC"
     # id as a tie-breaker keeps pagination stable when sort values repeat
-    { column => direction, id: :asc }
+    Arel.sql("#{sort_expression(column)} #{direction}, id ASC")
   end
 
-  def page
-    @page ||= [ param(:page).to_i, 1 ].max
+  # The UI shows country names, so sort by name. The CASE is built only from
+  # the constant country list, never from user input.
+  def sort_expression(column)
+    return column unless column == "country_code"
+
+    whens = Countries::LIST.map { |code, attrs| "WHEN '#{code}' THEN #{Employee.connection.quote(attrs[:name])}" }
+    "CASE country_code #{whens.join(' ')} END"
+  end
+
+  def requested_page
+    [ param(:page).to_i, 1 ].max
   end
 
   def per_page
