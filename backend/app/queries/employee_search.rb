@@ -55,7 +55,7 @@ class EmployeeSearch
   end
 
   def page
-    @page ||= [param(:page).to_i, 1].max
+    @page ||= [ param(:page).to_i, 1 ].max
   end
 
   def per_page

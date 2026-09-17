@@ -12,6 +12,6 @@ RSpec.describe "Lookups API" do
     expect(response).to have_http_status(:ok)
     expect(json["countries"]).to include({ "code" => "IN", "name" => "India", "currency" => "INR" })
     expect(json["departments"]).to eq(%w[Engineering Sales])
-    expect(json["job_titles"]).to eq(["Account Executive", "Software Engineer"])
+    expect(json["job_titles"]).to eq([ "Account Executive", "Software Engineer" ])
   end
 end

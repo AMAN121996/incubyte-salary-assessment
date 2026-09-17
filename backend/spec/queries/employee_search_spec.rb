@@ -51,7 +51,7 @@ RSpec.describe EmployeeSearch do
     end
 
     it "sorts by a whitelisted column and direction" do
-      expect(search(sort: "salary", direction: "desc").records.map(&:salary)).to eq([300, 200, 100])
+      expect(search(sort: "salary", direction: "desc").records.map(&:salary)).to eq([ 300, 200, 100 ])
     end
 
     it "falls back to defaults for unknown columns or directions" do

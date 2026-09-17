@@ -23,7 +23,7 @@ RSpec.describe "Employees API" do
       get "/api/employees", params: { country: "IN", page: 1, per_page: 10 }
 
       expect(response).to have_http_status(:ok)
-      expect(json["data"].map { |e| e["full_name"] }).to eq(["Ravi Kumar"])
+      expect(json["data"].map { |e| e["full_name"] }).to eq([ "Ravi Kumar" ])
       expect(json["meta"]).to eq("page" => 1, "per_page" => 10, "total" => 1, "total_pages" => 1)
     end
   end
@@ -71,8 +71,8 @@ RSpec.describe "Employees API" do
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(json["errors"]).to include(
-        "email" => ["is invalid"],
-        "salary" => ["must be greater than 0"]
+        "email" => [ "is invalid" ],
+        "salary" => [ "must be greater than 0" ]
       )
     end
 
