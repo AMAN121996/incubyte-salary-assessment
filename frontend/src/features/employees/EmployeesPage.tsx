@@ -13,7 +13,6 @@ import {
   TextInput,
   Title,
 } from '@mantine/core'
-import { useDebouncedCallback } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
 import { useState } from 'react'
 import { ApiError } from '../../api/client'
@@ -23,6 +22,7 @@ import { formatNumber } from '../../lib/format'
 import { EmployeeForm } from './EmployeeForm'
 import { EmployeesTable } from './EmployeesTable'
 import { useEmployeeListParams } from './useEmployeeListParams'
+import { useSearchInput } from './useSearchInput'
 
 type Editing = { mode: 'create' } | { mode: 'edit'; employee: Employee } | null
 
@@ -33,8 +33,7 @@ export function EmployeesPage() {
   const saveEmployee = useSaveEmployee()
   const deleteEmployee = useDeleteEmployee()
 
-  const [search, setSearch] = useState(params.q ?? '')
-  const debouncedSearch = useDebouncedCallback((q: string) => update({ q }), 300)
+  const search = useSearchInput(params.q, (q) => update({ q }))
 
   const [editing, setEditing] = useState<Editing>(null)
   const [deleting, setDeleting] = useState<Employee | null>(null)
@@ -87,11 +86,8 @@ export function EmployeesPage() {
           <TextInput
             label="Search"
             placeholder="Search name or email"
-            value={search}
-            onChange={(event) => {
-              setSearch(event.currentTarget.value)
-              debouncedSearch(event.currentTarget.value)
-            }}
+            value={search.value}
+            onChange={(event) => search.onChange(event.currentTarget.value)}
             style={{ flex: '1 1 240px' }}
           />
           <Select
@@ -125,7 +121,7 @@ export function EmployeesPage() {
             <Button
               variant="subtle"
               onClick={() => {
-                setSearch('')
+                search.clear()
                 clearFilters()
               }}
             >

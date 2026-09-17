@@ -3,6 +3,8 @@ import { useSearchParams } from 'react-router'
 import type { EmployeeListParams, SortDirection } from '../../api/types'
 
 const FILTER_KEYS = ['q', 'country', 'department', 'job_title'] as const
+// Must match the API's default order (EmployeeSearch::DEFAULT_SORT).
+export const DEFAULT_SORT = 'full_name'
 
 /**
  * List state (search, filters, sort, page) lives in the URL so HR can
@@ -46,7 +48,8 @@ export function useEmployeeListParams() {
 
   const toggleSort = useCallback(
     (column: string) => {
-      const direction: SortDirection = params.sort === column && params.direction !== 'desc' ? 'desc' : 'asc'
+      const currentSort = params.sort ?? DEFAULT_SORT
+      const direction: SortDirection = currentSort === column && params.direction !== 'desc' ? 'desc' : 'asc'
       update({ sort: column, direction })
     },
     [params.sort, params.direction, update],

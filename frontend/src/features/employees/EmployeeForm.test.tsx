@@ -38,6 +38,17 @@ describe('EmployeeForm', () => {
     expect(screen.getByLabelText(/Annual salary \(USD\)/)).toBeInTheDocument()
   })
 
+  it('warns that the salary amount is not converted when an existing employee changes country', async () => {
+    renderForm({ employee: buildEmployee({ country_code: 'IN', currency: 'INR' }) })
+    expect(screen.queryByText(/not converted/)).not.toBeInTheDocument()
+
+    const countryInput = screen.getAllByLabelText(/^Country/).find((el) => el.tagName === 'INPUT')!
+    await userEvent.click(countryInput)
+    await userEvent.click(await screen.findByText('United States (USD)'))
+
+    expect(await screen.findByText(/not converted/)).toBeInTheDocument()
+  })
+
   it('shows field errors returned by the server', () => {
     renderForm({ employee: buildEmployee(), serverErrors: { email: ['has already been taken'] } })
 

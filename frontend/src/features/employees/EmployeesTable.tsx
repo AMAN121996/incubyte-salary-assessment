@@ -1,6 +1,7 @@
 import { ActionIcon, Group, Table, Text, Tooltip, UnstyledButton, VisuallyHidden } from '@mantine/core'
 import type { Employee, EmployeeListParams } from '../../api/types'
 import { formatDate, formatMoney } from '../../lib/format'
+import { DEFAULT_SORT } from './useEmployeeListParams'
 
 type Column = { key: string; label: string; align?: 'right' }
 
@@ -23,7 +24,7 @@ type Props = {
 }
 
 export function EmployeesTable({ employees, sort, direction, onSort, onEdit, onDelete }: Props) {
-  const activeSort = sort ?? 'full_name'
+  const activeSort = sort ?? DEFAULT_SORT
 
   return (
     <Table.ScrollContainer minWidth={900}>

@@ -1,4 +1,4 @@
-import { Autocomplete, Button, Group, NumberInput, Select, SimpleGrid, Stack, TextInput } from '@mantine/core'
+import { Alert, Autocomplete, Button, Group, NumberInput, Select, SimpleGrid, Stack, TextInput } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { useEffect } from 'react'
 import type { FieldErrors } from '../../api/client'
@@ -21,7 +21,12 @@ type Props = {
   onCancel: () => void
 }
 
-const todayIso = () => new Date().toISOString().slice(0, 10)
+// The HR manager's local calendar date (toISOString would give the UTC date).
+const todayIso = () => {
+  const now = new Date()
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+}
 
 export function EmployeeForm({ employee, lookups, submitting = false, serverErrors, onSubmit, onCancel }: Props) {
   const form = useForm<EmployeeFormValues>({
@@ -35,6 +40,7 @@ export function EmployeeForm({ employee, lookups, submitting = false, serverErro
   }, [serverErrors, setErrors])
 
   const currency = lookups.countries.find((c) => c.code === form.values.country_code)?.currency
+  const countryChanged = employee !== undefined && form.values.country_code !== employee.country_code
   const countryOptions = lookups.countries.map((c) => ({ value: c.code, label: `${c.name} (${c.currency})` }))
 
   return (
@@ -74,6 +80,13 @@ export function EmployeeForm({ employee, lookups, submitting = false, serverErro
           />
           <TextInput label="Hire date" type="date" max={todayIso()} withAsterisk {...form.getInputProps('hired_on')} />
         </SimpleGrid>
+
+        {countryChanged && currency && (
+          <Alert color="yellow">
+            The salary will now be recorded in {currency}. The amount is not converted from {employee.currency}, so
+            check it before saving.
+          </Alert>
+        )}
 
         <Group justify="flex-end">
           <Button variant="default" onClick={onCancel}>

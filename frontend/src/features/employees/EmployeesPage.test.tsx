@@ -1,5 +1,6 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { Link } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import { buildEmployee, lookups } from '../../test/fixtures'
 import { mockApi, renderWithProviders } from '../../test/utils'
@@ -24,7 +25,13 @@ function setup({ route = '/employees', routes = {} }: { route?: string; routes?:
     }),
     ...routes,
   })
-  renderWithProviders(<EmployeesPage />, { route })
+  renderWithProviders(
+    <>
+      <Link to="/employees">Nav: Employees</Link>
+      <EmployeesPage />
+    </>,
+    { route },
+  )
   return api
 }
 
@@ -62,6 +69,41 @@ describe('EmployeesPage', () => {
     })
   })
 
+  it('keeps the search box in sync when navigation clears the query from the URL', async () => {
+    setup({ route: '/employees?q=priya' })
+    await screen.findByText('John Smith')
+    expect(screen.getByPlaceholderText('Search name or email')).toHaveValue('priya')
+
+    await userEvent.click(screen.getByRole('link', { name: 'Nav: Employees' }))
+
+    await waitFor(() => expect(screen.getByPlaceholderText('Search name or email')).toHaveValue(''))
+  })
+
+  it('does not re-apply a pending search after filters are cleared', async () => {
+    const api = setup({ route: '/employees?country=IN' })
+    await screen.findByText('John Smith')
+
+    await userEvent.type(screen.getByPlaceholderText('Search name or email'), 'pri')
+    await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
+    await act(() => new Promise((resolve) => setTimeout(resolve, 400)))
+
+    expect(screen.getByPlaceholderText('Search name or email')).toHaveValue('')
+    // On a slow machine the search may already have gone out before the click;
+    // what matters is that the list ends up unfiltered.
+    const last = listRequests(api).at(-1)!.url.searchParams
+    expect(last.has('q')).toBe(false)
+    expect(last.has('country')).toBe(false)
+  })
+
+  it('sorts by name descending on the first click, since name ascending is the default', async () => {
+    const api = setup()
+    await screen.findByText('John Smith')
+
+    await userEvent.click(screen.getByRole('button', { name: /Name/ }))
+
+    await waitFor(() => expect(listRequests(api).at(-1)!.url.search).toContain('sort=full_name&direction=desc'))
+  })
+
   it('toggles sorting when a column header is clicked', async () => {
     const api = setup()
     await screen.findByText('John Smith')
@@ -82,6 +124,8 @@ describe('EmployeesPage', () => {
 
     await waitFor(() => expect(api.calls.some((c) => c.method === 'DELETE')).toBe(true))
     expect(await screen.findByText('John Smith was removed')).toBeInTheDocument()
+    // the list is refetched so the deleted row disappears
+    await waitFor(() => expect(listRequests(api).length).toBeGreaterThan(1))
   })
 
   it('shows server validation errors when saving fails', async () => {
