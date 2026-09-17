@@ -47,6 +47,35 @@ docs **before** implementation, so it could be reviewed up front.
 | CI used `db:prepare`, which also seeds a newly created database, so the specs ran against 10,000 employees | First GitHub Actions run failed 16 specs that passed locally (the local test DB already existed) | Reproduced on a fresh DB, switched CI to `db:schema:load` |
 | Serving the SPA's `index.html` from `public/` would inherit a 1-year cache header, pinning users to an old UI after a deploy | Reviewing the static file server config | `SpaController` serves `index.html` with `no-cache`; only hashed assets are long-cached |
 
+## Final verification pass
+
+After the build was "done", the user asked for the implementation to be verified against the brief.
+Two independent checks ran:
+
+1. **An independent reviewer agent** read the code without being told what the author thought was
+   correct. It was limited to GET requests against the live instance, so it couldn't damage data.
+2. **The full test suite was rerun as three copies at once** to simulate a slow CI runner, since the
+   brief asks for *deterministic* tests.
+
+Every finding was reproduced before fixing. Each fix got a test that fails without the fix and passes
+with it (confirmed by running the new tests against the old code):
+
+| Finding | Evidence | Fix |
+|---------|----------|-----|
+| `?page=9223372036854775807` returned **500** (SQLite offset overflow) | `curl` against the running app | Page clamped to the last page |
+| A page past the end (e.g. after deleting its last row) showed "No employees match" and "Showing 51–50 of 50" | API returned `data: []` with `total > 0` | Server returns the last page instead |
+| Sorting by Country used ISO codes, so United Kingdom (GB) sorted before India | Live API response | Sort by country name (CASE built from the constant list) |
+| Hire-date check used the **UTC** date, so HR in India couldn't enter today's hire before 05:30 | Code review | Server allows up to the furthest time zone (UTC+14); the form uses the local date |
+| Currency was re-derived on every save, contradicting the design doc | Doc vs code comparison | Derive only on create or country change; the form warns that amounts aren't converted |
+| Two simultaneous saves with one email → unique index → **500** | Code review | `RecordNotUnique` mapped to a 422 field error |
+| The search box drifted from the URL (nav link, Back, Clear filters racing a pending search) | Code review | Extracted `useSearchInput` |
+| **The first fix for the search box itself lost keystrokes** ("priya" became "pria") when a search landed mid-typing | Found only by the load test; a normal UI test couldn't reproduce it | The hook ignores the URL echo of its own search; pinned by a fake-timer test that fails on the buggy version every time |
+| First click on "Name" did nothing (default sort was implicit) | Code review | Treat a missing sort as `full_name` |
+| 8–9 UI tests exceeded the 5 s default under load | Load test | Raised test and async-lookup timeouts; timing-sensitive logic moved to fake-timer hook tests |
+
+Lesson recorded: passing tests on an idle laptop weren't enough evidence. The independent review
+and the load test each found problems the other missed.
+
 ## Product judgement kept in human-reviewable docs
 
 The AI proposed, and the docs explain, choices that are about *correctness for the HR manager*

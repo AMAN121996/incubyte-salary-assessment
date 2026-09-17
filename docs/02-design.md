@@ -56,7 +56,9 @@ indexes: email (unique), country_code, [country_code, job_title],
 floating-point money bugs. (A payroll system would use minor units; that is out of scope.)
 
 **Why store `currency` if it is derived?** It freezes the currency the salary was recorded in.
-If a country's currency mapping ever changes, historic records stay correct.
+If a country's currency mapping ever changes, historic records stay correct. It is derived on
+create and re-derived only when the employee's country changes. The form then warns that the
+amount is not converted.
 
 ## API contract
 
@@ -74,7 +76,10 @@ All responses are JSON. Errors use one envelope: `{ "errors": { field: [messages
 | `GET /api/insights/countries/:code` | One country: summary stats plus breakdown by job title and by department |
 
 `sort` is whitelisted (`full_name, job_title, department, country_code, salary, hired_on`) to
-prevent SQL injection through `ORDER BY`. `per_page` is clamped to 1..100.
+prevent SQL injection through `ORDER BY`. `country_code` sorts by country *name*, because that is
+what the table shows. `per_page` is clamped to 1..100, and `page` to the last page: a page past the
+end (e.g. after deleting its last row) returns the last page, and `meta.page` reports the page
+actually returned.
 
 ## Key trade-offs
 
