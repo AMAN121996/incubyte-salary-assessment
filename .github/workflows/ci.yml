@@ -19,7 +19,9 @@ jobs:
         with:
           working-directory: backend
           bundler-cache: true
-      - run: bin/rails db:prepare
+      # schema:load, not db:prepare: preparing a fresh database also runs the
+      # 10k-employee seed, which would pollute the test database.
+      - run: bin/rails db:schema:load
       - run: bundle exec rspec
       - run: bin/rubocop
       - run: bin/brakeman --quiet --no-pager
@@ -32,6 +34,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
       - uses: actions/setup-node@v4
         with:
           node-version: 22
