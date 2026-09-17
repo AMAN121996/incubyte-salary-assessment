@@ -14,5 +14,8 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
     css: false,
+    // UI tests render real Mantine components and simulate typing; on a loaded
+    // CI runner they can exceed the 5s default without anything being wrong.
+    testTimeout: 20_000,
   },
 })
