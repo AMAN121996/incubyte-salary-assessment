@@ -13,3 +13,4 @@
 # Built React app is copied here at image build time
 /public/assets
 /public/index.html
+/vendor/frontend/index.html

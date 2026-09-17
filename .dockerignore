@@ -1,0 +1,12 @@
+.git
+**/node_modules
+**/.DS_Store
+docs
+frontend/dist
+backend/log/*
+backend/tmp/*
+backend/storage/*
+backend/config/master.key
+backend/vendor/frontend
+backend/public/assets
+backend/coverage

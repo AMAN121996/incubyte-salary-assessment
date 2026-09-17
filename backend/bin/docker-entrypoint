@@ -1,0 +1,9 @@
+#!/bin/bash -e
+
+# Prepare the database before starting the server. db:prepare is idempotent:
+# it creates and seeds a new database, and only migrates an existing one.
+if [ "${@: -2:1}" == "server" ] || [ "${@: -3:1}" == "server" ]; then
+  ./bin/rails db:prepare
+fi
+
+exec "${@}"

@@ -40,5 +40,8 @@ module SalaryManagement
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+
+    # Built React index.html (copied here by the Docker build), served by SpaController.
+    config.x.spa_index_path = Rails.root.join("vendor/frontend/index.html")
   end
 end
