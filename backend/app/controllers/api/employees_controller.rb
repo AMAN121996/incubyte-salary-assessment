@@ -2,6 +2,11 @@ module Api
   class EmployeesController < BaseController
     before_action :set_employee, only: %i[show update destroy]
 
+    def index
+      result = EmployeeSearch.new(search_params).call
+      render json: { data: result.records.map { |e| EmployeeSerializer.call(e) }, meta: result.meta }
+    end
+
     def show
       render json: EmployeeSerializer.call(@employee)
     end
@@ -33,6 +38,10 @@ module Api
 
     def set_employee
       @employee = Employee.find(params[:id])
+    end
+
+    def search_params
+      params.permit(:q, :country, :department, :job_title, :sort, :direction, :page, :per_page)
     end
 
     def employee_params

@@ -15,6 +15,19 @@ RSpec.describe "Employees API" do
     }
   end
 
+  describe "GET /api/employees" do
+    it "returns a filtered, paginated list with metadata" do
+      create(:employee, full_name: "Ravi Kumar", country_code: "IN")
+      create(:employee, full_name: "Ana Silva", country_code: "BR")
+
+      get "/api/employees", params: { country: "IN", page: 1, per_page: 10 }
+
+      expect(response).to have_http_status(:ok)
+      expect(json["data"].map { |e| e["full_name"] }).to eq(["Ravi Kumar"])
+      expect(json["meta"]).to eq("page" => 1, "per_page" => 10, "total" => 1, "total_pages" => 1)
+    end
+  end
+
   describe "GET /api/employees/:id" do
     it "returns the employee" do
       employee = create(:employee, full_name: "Jane Doe", country_code: "GB", salary: 65_000)
