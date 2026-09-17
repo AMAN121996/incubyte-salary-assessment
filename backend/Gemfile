@@ -6,6 +6,8 @@ gem "rails", "~> 8.1.3", ">= 8.1.3.1"
 gem "sqlite3", ">= 2.1"
 # Use the Puma web server [https://github.com/puma/puma]
 gem "puma", ">= 5.0"
+# json 3.x changed JSON.parse arity and breaks ActiveSupport 8.1 decoding
+gem "json", "~> 2.10"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 # gem "jbuilder"
 
